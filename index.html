@@ -21,9 +21,9 @@
 
     .cookie-container {
       position: relative;
-      width: 300px;
-      height: 300px;
-      margin-bottom: 50px;
+      width: 600px;
+      height: 600px;
+      margin-bottom: 20px;
     }
 
     .cookie-half {
@@ -31,50 +31,56 @@
       width: 50%;
       height: 100%;
       background: url('https://i.imgur.com/HrFxYuc.png') no-repeat center;
-      background-size: 300px 300px;
+      background-size: 600px 600px;
       transition: transform 1s ease;
     }
 
     .left {
       left: 0;
       background-position: left center;
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
     }
 
     .right {
       right: 0;
       background-position: right center;
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
     }
 
     .break .left {
-      transform: translateX(-160px);
+      transform: translateX(-200px);
     }
 
     .break .right {
-      transform: translateX(160px);
+      transform: translateX(200px);
     }
 
     h1 {
       color: orange;
-      font-size: 48px;
+      font-size: 64px;
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
       opacity: 0;
       transition: opacity 1s ease;
-      text-align: center;
+      z-index: 10;
     }
 
     @keyframes float {
       0% {
-        transform: translateY(0);
+        transform: translate(-50%, -50%) translateY(0);
       }
       50% {
-        transform: translateY(-15px);
+        transform: translate(-50%, -50%) translateY(-15px);
       }
       100% {
-        transform: translateY(0);
+        transform: translate(-50%, -50%) translateY(0);
       }
     }
 
     .show-text h1 {
       opacity: 1;
+      left: 50%;
       animation: float 3s ease-in-out infinite;
     }
   </style>
@@ -83,22 +89,22 @@
   <div class="cookie-container" id="cookie">
     <div class="cookie-half left"></div>
     <div class="cookie-half right"></div>
+    <h1 id="text">COMING SOON</h1>
   </div>
 
-  <h1 id="text">COMING SOON</h1>
-
-  <!-- Optional: Sound effect -->
+  <!-- Sound effect -->
   <audio id="cookieSound" src="cookie-break.mp3" preload="auto"></audio>
 
   <script>
     window.onload = () => {
       const cookie = document.getElementById('cookie');
-      const text = document.getElementById('text');
       const cookieSound = document.getElementById('cookieSound');
+      const text = document.getElementById('text');
 
       setTimeout(() => {
         cookieSound.play();
         cookie.classList.add('break');
+
         setTimeout(() => {
           document.body.classList.add('show-text');
         }, 1000);
@@ -107,3 +113,4 @@
   </script>
 </body>
 </html>
+
