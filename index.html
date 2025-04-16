@@ -21,9 +21,9 @@
 
     .cookie-container {
       position: relative;
-      width: 150px;
-      height: 150px;
-      margin-bottom: 30px;
+      width: 300px;
+      height: 300px;
+      margin-bottom: 50px;
     }
 
     .cookie-half {
@@ -31,40 +31,42 @@
       width: 50%;
       height: 100%;
       background: url('https://i.imgur.com/HrFxYuc.png') no-repeat center;
-      background-size: contain;
+      background-size: 300px 300px;
       transition: transform 1s ease;
     }
 
     .left {
       left: 0;
+      background-position: left center;
     }
 
     .right {
       right: 0;
+      background-position: right center;
     }
 
     .break .left {
-      transform: translateX(-100px);
+      transform: translateX(-160px);
     }
 
     .break .right {
-      transform: translateX(100px);
+      transform: translateX(160px);
     }
 
     h1 {
       color: orange;
-      font-size: 36px;
+      font-size: 48px;
       opacity: 0;
       transition: opacity 1s ease;
+      text-align: center;
     }
 
-    /* Floating animation for the "COMING SOON" text */
     @keyframes float {
       0% {
         transform: translateY(0);
       }
       50% {
-        transform: translateY(-10px);
+        transform: translateY(-15px);
       }
       100% {
         transform: translateY(0);
@@ -73,36 +75,32 @@
 
     .show-text h1 {
       opacity: 1;
-      animation: float 3s ease-in-out infinite; /* Apply floating effect */
+      animation: float 3s ease-in-out infinite;
     }
   </style>
 </head>
 <body>
-  <!-- Cookie container -->
   <div class="cookie-container" id="cookie">
     <div class="cookie-half left"></div>
     <div class="cookie-half right"></div>
   </div>
 
-  <!-- "COMING SOON" text -->
   <h1 id="text">COMING SOON</h1>
 
-  <!-- Audio element for the sound effect -->
+  <!-- Optional: Sound effect -->
   <audio id="cookieSound" src="cookie-break.mp3" preload="auto"></audio>
 
   <script>
     window.onload = () => {
       const cookie = document.getElementById('cookie');
       const text = document.getElementById('text');
-      const cookieSound = document.getElementById('cookieSound'); // Get the audio element
+      const cookieSound = document.getElementById('cookieSound');
 
       setTimeout(() => {
-        // Play the sound when the cookie breaks
         cookieSound.play();
-
-        cookie.classList.add('break'); // Trigger cookie breaking animation
+        cookie.classList.add('break');
         setTimeout(() => {
-          document.body.classList.add('show-text'); // Show the "COMING SOON" text
+          document.body.classList.add('show-text');
         }, 1000);
       }, 1000);
     };
