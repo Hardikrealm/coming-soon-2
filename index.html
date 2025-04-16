@@ -65,11 +65,13 @@
       font-size: 64px;
       position: absolute;
       top: 50%;
-      transform: translateY(-50%);
+      left: 50%;
+      transform: translate(-50%, -50%);
       opacity: 0;
       transition: opacity 1s ease;
       z-index: 10;
       text-align: center;
+      pointer-events: none;
     }
 
     @keyframes float {
@@ -86,12 +88,11 @@
 
     .show-text h1 {
       opacity: 1;
-      left: 50%;
       animation: float 3s ease-in-out infinite;
     }
 
-    /* Mobile styles */
-    @media screen and (max-width: 768px) {
+    /* Responsive styles for mobile */
+    @media (max-width: 768px) {
       .cookie-container {
         width: 300px;
         height: 300px;
@@ -99,17 +100,14 @@
 
       h1 {
         font-size: 32px;
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
       }
+    }
 
-      body.mobile .cookie-container {
-        opacity: 0;
-        transform: scale(0);
-        pointer-events: none;
-      }
+    /* Hide the cookie after break for mobile */
+    .hide-cookie {
+      opacity: 0;
+      transform: scale(0);
+      pointer-events: none;
     }
   </style>
 </head>
@@ -124,16 +122,15 @@
   <audio id="cookieSound" src="cookie-break.mp3" preload="auto"></audio>
 
   <script>
+    function isMobileDevice() {
+      return /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+
     window.onload = () => {
       const cookie = document.getElementById('cookie');
       const cookieSound = document.getElementById('cookieSound');
-      const text = document.getElementById('text');
 
-      const isMobile = window.innerWidth <= 768;
-      if (isMobile) {
-        document.body.classList.add('mobile');
-      }
-
+      // Delay to break the cookie
       setTimeout(() => {
         cookieSound.play();
         cookie.classList.add('break');
@@ -141,10 +138,9 @@
         setTimeout(() => {
           document.body.classList.add('show-text');
 
-          if (isMobile) {
-            // hide cookie on mobile after crack
-            cookie.style.opacity = '0';
-            cookie.style.transform = 'scale(0)';
+          // Hide the cookie after cracking on mobile
+          if (isMobileDevice()) {
+            cookie.classList.add('hide-cookie');
           }
         }, 1000);
       }, 1000);
@@ -152,3 +148,4 @@
   </script>
 </body>
 </html>
+
