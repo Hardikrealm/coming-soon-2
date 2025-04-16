@@ -21,9 +21,9 @@
 
     .cookie-container {
       position: relative;
-      width: 400px;
-      height: 400px;
-      margin-bottom: 30px;
+      width: 1200px;
+      height: 1200px;
+      margin-bottom: 20px;
     }
 
     .cookie-half {
@@ -31,28 +31,26 @@
       width: 50%;
       height: 100%;
       background: url('https://i.imgur.com/HrFxYuc.png') no-repeat center;
-      background-size: cover;
-      transition: transform 1s ease, clip-path 1s ease;
-      transform-origin: center;
+      background-size: 1200px 1200px;
+      transition: transform 1s ease;
     }
 
     .left {
       left: 0;
-      clip-path: polygon(0% 0%, 50% 10%, 60% 50%, 40% 90%, 0% 100%);
+      background-position: left center;
     }
 
     .right {
       right: 0;
-      clip-path: polygon(100% 0%, 50% 10%, 40% 50%, 60% 90%, 100% 100%);
+      background-position: right center;
     }
 
-    /* Zig-zag breaking effect */
     .break .left {
-      transform: translateX(-200px) translateY(20px);
+      transform: translateX(-400px);
     }
 
     .break .right {
-      transform: translateX(200px) translateY(-20px);
+      transform: translateX(400px);
     }
 
     h1 {
