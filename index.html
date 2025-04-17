@@ -25,10 +25,8 @@
 
     .cookie-container {
       position: relative;
-      width: 80vmin;
-      height: 80vmin;
-      max-width: 600px;
-      max-height: 600px;
+      width: 600px;
+      height: 600px;
       margin-bottom: 20px;
       transition: opacity 0.5s ease, transform 0.5s ease;
     }
@@ -38,7 +36,7 @@
       width: 50%;
       height: 100%;
       background: url('https://i.imgur.com/HrFxYuc.png') no-repeat center;
-      background-size: cover;
+      background-size: 600px 600px;
       transition: transform 1s ease;
     }
 
@@ -55,40 +53,56 @@
     }
 
     .break .left {
-      transform: translateX(-50%);
+      transform: translateX(-200px);
     }
 
     .break .right {
-      transform: translateX(50%);
+      transform: translateX(200px);
     }
 
     #text {
       color: orange;
-      font-size: 6vmin;
-      text-align: center;
+      font-size: 64px;
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
       opacity: 0;
       transition: opacity 1s ease;
-      position: fixed;
       z-index: 10;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
     }
 
     @keyframes float {
       0% { transform: translate(-50%, -50%) translateY(0); }
-      50% { transform: translate(-50%, -50%) translateY(-10px); }
+      50% { transform: translate(-50%, -50%) translateY(-15px); }
       100% { transform: translate(-50%, -50%) translateY(0); }
     }
 
     .show-text #text {
       opacity: 1;
+      left: 50%;
       animation: float 3s ease-in-out infinite;
+      transform: translate(-50%, -50%);
     }
 
     .hide-cookie {
-      opacity: 0;
-      pointer-events: none;
+      display: none;
+    }
+
+    /* MOBILE RESPONSIVE RULES */
+    @media (max-width: 768px) {
+      .cookie-container {
+        width: 80vmin;
+        height: 80vmin;
+        background-size: cover;
+      }
+
+      .cookie-half {
+        background-size: cover;
+      }
+
+      #text {
+        font-size: 6vmin;
+      }
     }
   </style>
 </head>
@@ -99,12 +113,11 @@
   </div>
   <h1 id="text">COMING SOON</h1>
 
-  <!-- Sound effect -->
   <audio id="cookieSound" src="cookie-break.mp3" preload="auto"></audio>
 
   <script>
     function isMobileDevice() {
-      return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      return window.innerWidth <= 768;
     }
 
     window.onload = () => {
@@ -118,7 +131,6 @@
 
         setTimeout(() => {
           document.body.classList.add('show-text');
-
           if (isMobileDevice()) {
             cookie.classList.add('hide-cookie');
           }
