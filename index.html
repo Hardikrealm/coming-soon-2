@@ -21,6 +21,7 @@
       overflow: hidden;
       font-family: 'Press Start 2P', cursive;
       flex-direction: column;
+      position: relative;
     }
 
     .cookie-container {
@@ -65,10 +66,13 @@
       font-size: 64px;
       position: absolute;
       top: 50%;
-      transform: translateY(-50%);
+      left: 50%;
+      transform: translate(-50%, -50%);
       opacity: 0;
       transition: opacity 1s ease;
       z-index: 10;
+      text-align: center;
+      pointer-events: none;
     }
 
     @keyframes float {
@@ -79,9 +83,7 @@
 
     .show-text #text {
       opacity: 1;
-      left: 50%;
       animation: float 3s ease-in-out infinite;
-      transform: translate(-50%, -50%);
     }
 
     .hide-cookie {
@@ -101,7 +103,7 @@
       }
 
       #text {
-        font-size: 6vmin;
+        font-size: 12vmin; /* doubled the size for mobile */
       }
     }
   </style>
@@ -113,6 +115,7 @@
   </div>
   <h1 id="text">COMING SOON</h1>
 
+  <!-- Sound effect -->
   <audio id="cookieSound" src="cookie-break.mp3" preload="auto"></audio>
 
   <script>
@@ -123,7 +126,6 @@
     window.onload = () => {
       const cookie = document.getElementById('cookie');
       const cookieSound = document.getElementById('cookieSound');
-      const text = document.getElementById('text');
 
       setTimeout(() => {
         cookieSound.play();
@@ -140,4 +142,5 @@
   </script>
 </body>
 </html>
+
 
