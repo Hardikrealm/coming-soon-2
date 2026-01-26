@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Coming Soon</title>
 
+  <!-- Font -->
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+  <!-- GSAP -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 
   <style>
@@ -20,6 +23,7 @@
       align-items: center;
       font-family: 'Press Start 2P', cursive;
       perspective: 1000px;
+      overflow: hidden;
     }
 
     .cookie-container {
@@ -36,6 +40,7 @@
       background: url('https://i.imgur.com/HrFxYuc.png') no-repeat center;
       background-size: 600px 600px;
       transition: transform 1s ease;
+      will-change: transform;
     }
 
     .left { left: 0; background-position: left center; }
@@ -71,7 +76,7 @@
       animation: float 3s ease-in-out infinite;
     }
 
-    /* MOBILE FIX */
+    /* MOBILE */
     .hide-cookie .cookie-half {
       display: none;
     }
@@ -110,48 +115,70 @@
 
     window.onload = () => {
       const cookie = document.getElementById('cookie');
+      const leftHalf = document.querySelector('.left');
+      const rightHalf = document.querySelector('.right');
       const cookieSound = document.getElementById('cookieSound');
+
       let broken = false;
+      const strength = 30;
 
-      // GSAP hover (desktop only)
       if (!isMobileDevice()) {
-        const strength = 25;
-
         cookie.addEventListener('mousemove', (e) => {
-          if (broken) return;
-
           const rect = cookie.getBoundingClientRect();
           const x = e.clientX - rect.left - rect.width / 2;
           const y = e.clientY - rect.top - rect.height / 2;
 
-          gsap.to(cookie, {
-            x: x / strength,
-            y: y / strength,
-            rotationY: x / 18,
-            rotationX: -y / 18,
-            duration: 0.4,
-            ease: "power3.out"
-          });
+          if (!broken) {
+            /* BEFORE BREAK → MOVE WHOLE COOKIE */
+            gsap.to(cookie, {
+              x: x / strength,
+              y: y / strength,
+              rotationY: x / 18,
+              rotationX: -y / 18,
+              duration: 0.4,
+              ease: "power3.out"
+            });
+          } else {
+            /* AFTER BREAK → MOVE HALVES */
+            gsap.to(leftHalf, {
+              x: (-200 + x / 20),
+              y: y / 25,
+              rotationZ: -x / 40,
+              duration: 0.4,
+              ease: "power3.out"
+            });
+
+            gsap.to(rightHalf, {
+              x: (200 + x / 20),
+              y: y / 25,
+              rotationZ: x / 40,
+              duration: 0.4,
+              ease: "power3.out"
+            });
+          }
         });
 
         cookie.addEventListener('mouseleave', () => {
-          if (broken) return;
-
-          gsap.to(cookie, {
-            x: 0, y: 0, rotationX: 0, rotationY: 0,
-            duration: 0.6, ease: "power3.out"
-          });
+          if (!broken) {
+            gsap.to(cookie, {
+              x: 0, y: 0,
+              rotationX: 0, rotationY: 0,
+              duration: 0.6,
+              ease: "power3.out"
+            });
+          }
         });
       }
 
-      // AUTO BREAK
+      /* AUTO BREAK */
       setTimeout(() => {
         broken = true;
         cookieSound.play();
         cookie.classList.add('break');
 
         gsap.to(cookie, {
-          x: 0, y: 0, rotationX: 0, rotationY: 0,
+          x: 0, y: 0,
+          rotationX: 0, rotationY: 0,
           duration: 0.2
         });
 
