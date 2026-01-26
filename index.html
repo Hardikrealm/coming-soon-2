@@ -4,7 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Coming Soon</title>
+
+  <!-- Font -->
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+  <!-- GSAP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
   <style>
     * {
       box-sizing: border-box;
@@ -22,6 +28,7 @@
       font-family: 'Press Start 2P', cursive;
       flex-direction: column;
       position: relative;
+      perspective: 1000px;
     }
 
     .cookie-container {
@@ -30,6 +37,7 @@
       height: 600px;
       margin-bottom: 20px;
       transition: opacity 0.5s ease, transform 0.5s ease;
+      transform-style: preserve-3d;
     }
 
     .cookie-half {
@@ -39,18 +47,17 @@
       background: url('https://i.imgur.com/HrFxYuc.png') no-repeat center;
       background-size: 600px 600px;
       transition: transform 1s ease;
+      backface-visibility: hidden;
     }
 
     .left {
       left: 0;
       background-position: left center;
-      clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
     }
 
     .right {
       right: 0;
       background-position: right center;
-      clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
     }
 
     .break .left {
@@ -90,33 +97,33 @@
       display: none;
     }
 
-    /* MOBILE RESPONSIVE RULES */
+    /* MOBILE RESPONSIVE */
     @media (max-width: 768px) {
-  .cookie-container {
-    width: 100vmin;
-    height: 100vmin;
-    background-size: cover;
-  }
+      .cookie-container {
+        width: 100vmin;
+        height: 100vmin;
+      }
 
-  .cookie-half {
-    background-size: 100vmin 100vmin;
-  }
+      .cookie-half {
+        background-size: 100vmin 100vmin;
+      }
 
-  #text {
-    font-size: 12vmin; /* already doubled, looks good */
-  }
-}
-
+      #text {
+        font-size: 12vmin;
+      }
+    }
   </style>
 </head>
+
 <body>
+
   <div class="cookie-container" id="cookie">
     <div class="cookie-half left"></div>
     <div class="cookie-half right"></div>
   </div>
+
   <h1 id="text">COMING SOON</h1>
 
-  <!-- Sound effect -->
   <audio id="cookieSound" src="cookie-break.mp3" preload="auto"></audio>
 
   <script>
@@ -127,10 +134,57 @@
     window.onload = () => {
       const cookie = document.getElementById('cookie');
       const cookieSound = document.getElementById('cookieSound');
+      let broken = false;
 
+      // ===== GSAP CURSOR INTERACTION =====
+      if (!isMobileDevice()) {
+        const strength = 25;
+
+        cookie.addEventListener('mousemove', (e) => {
+          if (broken) return;
+
+          const rect = cookie.getBoundingClientRect();
+          const x = e.clientX - rect.left - rect.width / 2;
+          const y = e.clientY - rect.top - rect.height / 2;
+
+          gsap.to(cookie, {
+            x: x / strength,
+            y: y / strength,
+            rotationY: x / 18,
+            rotationX: -y / 18,
+            duration: 0.4,
+            ease: "power3.out"
+          });
+        });
+
+        cookie.addEventListener('mouseleave', () => {
+          if (broken) return;
+
+          gsap.to(cookie, {
+            x: 0,
+            y: 0,
+            rotationX: 0,
+            rotationY: 0,
+            duration: 0.6,
+            ease: "power3.out"
+          });
+        });
+      }
+
+      // ===== AUTO BREAK (EXISTING BEHAVIOR) =====
       setTimeout(() => {
+        broken = true;
+
         cookieSound.play();
         cookie.classList.add('break');
+
+        gsap.to(cookie, {
+          x: 0,
+          y: 0,
+          rotationX: 0,
+          rotationY: 0,
+          duration: 0.2
+        });
 
         setTimeout(() => {
           document.body.classList.add('show-text');
@@ -141,7 +195,6 @@
       }, 1000);
     };
   </script>
+
 </body>
 </html>
-
-
