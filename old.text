@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Coming Soon</title>
+
+  <!-- Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+  <!-- GSAP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      background: white;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Press Start 2P', cursive;
+      perspective: 1000px;
+      overflow: hidden;
+    }
+
+    .cookie-container {
+      position: relative;
+      width: 600px;
+      height: 600px;
+      transform-style: preserve-3d;
+    }
+
+    .cookie-half {
+      position: absolute;
+      width: 50%;
+      height: 100%;
+      background: url('./cookie.png') no-repeat center;
+      background-size: 600px 600px;
+      transition: transform 1s ease;
+      will-change: transform;
+    }
+
+    .left { left: 0; background-position: left center; }
+    .right { right: 0; background-position: right center; }
+
+          /* CRACK STATE (FIRST CLICK) */
+.crack .left {
+  transform: translateX(-5px);
+}
+
+.crack .right {
+  transform: translateX(5px);
+}
+    .break .left { transform: translateX(-200px); }
+    .break .right { transform: translateX(200px); }
+
+    /* TEXT */
+    #text {
+      position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: orange;
+  font-size: 64px;
+  opacity: 0;
+  z-index: 5;
+  pointer-events: none;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+
+  transition: opacity 0.8s ease;
+    }
+
+    @keyframes float {
+      0% { transform: translate(-50%, -50%) translateY(0); }
+      50% { transform: translate(-50%, -50%) translateY(-15px); }
+      100% { transform: translate(-50%, -50%) translateY(0); }
+    }
+
+    #text.show {
+      opacity: 1;
+  z-index: 15;
+  animation: float 3s ease-in-out infinite;
+}
+
+
+    /* MOBILE */
+    .hide-cookie  {
+      pointer-events: none;
+    }
+
+    @media (max-width: 768px) {
+      .cookie-container {
+        width: 100vmin;
+        height: 100vmin;
+      }
+
+      .cookie-half {
+        background-size: 100vmin 100vmin;
+      }
+
+      #text {
+        font-size: 12vmin;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="cookie-container" id="cookie">
+    <div class="cookie-half left"></div>
+    <div class="cookie-half right"></div> 
+  </div>
+  <h1 id="text">
+    <span>COMING</span>
+    <span>SOON</span>
+  </h1>
+
+  <audio id="cookieSound" src="cookie-break.mp3" preload="auto"></audio>
+
+  <script>
+    function isMobileDevice() {
+      return window.innerWidth <= 768;
+    }
+
+    window.onload = () => {
+      const cookie = document.getElementById('cookie');
+      const leftHalf = document.querySelector('.left');
+      const rightHalf = document.querySelector('.right');
+      const cookieSound = document.getElementById('cookieSound');
+
+      let broken = false;
+      const strength = 30;
+      let clickCount = 0;
+
+
+      cookie.addEventListener('click', () => {
+  clickCount++;
+
+  // CLICK 1 → CRACK
+  if (clickCount === 1) {
+    cookie.classList.add('crack');
+  }
+
+  // CLICK 2 → BREAK + SHOW TEXT BETWEEN HALVES
+  if (clickCount === 2) {
+    broken = true;
+    cookie.classList.remove('crack');
+    cookie.classList.add('break');
+
+    cookieSound?.play().catch(() => {});
+
+    document.getElementById('text').classList.add('show');
+  }
+
+  // CLICK 3 → FADE HALVES AWAY
+  if (clickCount === 3) {
+    gsap.to(cookie, {
+      opacity: 0,
+      scale: 0.85,
+      duration: 1,
+      ease: "power2.inOut",
+      onComplete: () => {
+        cookie.classList.add('hide-cookie');
+      }
+    });
+  }
+});
+
+
+
+      if (!isMobileDevice()) {
+        cookie.addEventListener('mousemove', (e) => {
+          const rect = cookie.getBoundingClientRect();
+  const x = e.clientX - rect.left - rect.width / 2;
+  const y = e.clientY - rect.top - rect.height / 2;
+
+  if (!broken) {
+    gsap.to(cookie, {
+      x: x / strength,
+      y: y / strength,
+      rotationY: x / 18,
+      rotationX: -y / 18,
+      duration: 0.4,
+      ease: "power3.out"
+    });
+  } else {
+    gsap.to(leftHalf, {
+      x: (-200 + x / 20),
+      y: y / 25,
+      rotationZ: -x / 40,
+      duration: 0.4,
+      ease: "power3.out"
+    });
+
+    gsap.to(rightHalf, {
+      x: (200 + x / 20),
+      y: y / 25,
+      rotationZ: x / 40,
+      duration: 0.4,
+      ease: "power3.out"
+            });
+          }
+        });
+
+        cookie.addEventListener('mouseleave', () => {
+          if (!broken) {
+            gsap.to(cookie, {
+              x: 0, y: 0,
+              rotationX: 0, rotationY: 0,
+              duration: 0.6,
+              ease: "power3.out"
+            });
+          }
+        });
+      }
+
+      /* AUTO BREAK */
+      /*setTimeout(() => {
+        broken = true;
+        cookieSound.play();
+        cookie.classList.add('break');
+
+        gsap.to(cookie, {
+          x: 0, y: 0,
+          rotationX: 0, rotationY: 0,
+          duration: 0.2
+        });
+
+        setTimeout(() => {
+          document.body.classList.add('show-text');
+          if (isMobileDevice()) {
+            cookie.classList.add('hide-cookie');
+          }
+        }, 1000);
+      }, 1000);*/
+    };
+  </script>
+
+</body>
+</html>

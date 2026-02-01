@@ -5,94 +5,141 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Coming Soon</title>
 
-  <!-- Font -->
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-
-  <!-- GSAP -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 
   <style>
     * { box-sizing: border-box; }
 
     body {
-      background: white;
       margin: 0;
       height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
       font-family: 'Press Start 2P', cursive;
-      perspective: 1000px;
+      background: white;
       overflow: hidden;
     }
 
-    .cookie-container {
+    /* ONE coordinate system */
+    .stage {
       position: relative;
-      width: 600px;
-      height: 600px;
-      transform-style: preserve-3d;
+      width: 500px;
+      height: 500px;
     }
 
-    .cookie-half {
+    .cookie {
       position: absolute;
-      width: 50%;
+      inset: 0;
+      width: 100%;
       height: 100%;
-      background: url('https://i.imgur.com/HrFxYuc.png') no-repeat center;
-      background-size: 600px 600px;
-      transition: transform 1s ease;
-      will-change: transform;
+      pointer-events: none;
     }
 
-    .left { left: 0; background-position: left center; }
-    .right { right: 0; background-position: right center; }
+    .hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
 
-    .break .left { transform: translateX(-200px); }
-    .break .right { transform: translateX(200px); }
+    /* LEFT / RIGHT PIECES */
+    .left {
+      transform: translateX(0);
+    }
 
-    /* TEXT */
+    .right {
+      transform: translateX(0);
+    }
+
+    /* TEXT
     #text {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: orange;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+
       font-size: 64px;
+      color: orange;
+
       opacity: 0;
-      z-index: 10;
-      width: 100%;
-      text-align: center;
+      visibility: hidden;
       pointer-events: none;
-      transition: opacity 1s ease;
-    }
+      z-index: 5;
+    } */
 
-    @keyframes float {
-      0% { transform: translate(-50%, -50%) translateY(0); }
-      50% { transform: translate(-50%, -50%) translateY(-15px); }
-      100% { transform: translate(-50%, -50%) translateY(0); }
-    }
-
-    .show-text #text {
+    #text.show {
       opacity: 1;
+      visibility: visible;
       animation: float 3s ease-in-out infinite;
     }
+    #three-container {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  opacity: 0;
+  display: flex;
+  visibility: hidden;
+  justify-content: center;
+  align-items: center;
 
-    /* MOBILE */
-    .hide-cookie .cookie-half {
-      display: none;
+  pointer-events: none; 
+}
+#three-container.active {
+  visibility: visible;
+  pointer-events: none;
+}
+#three-container.interactive {
+  pointer-events: auto; 
+}
+#three-container.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+#click-hint {
+  position: absolute;
+  bottom: -50px;
+  width: 100%;
+  text-align: center;
+
+  font-size: 29px;
+  color: #f4a261; /* light orange */
+  opacity: 0.9;
+
+  animation: pulse 1.2s infinite ease-in-out;
+  pointer-events: none;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.7; }
+  50% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.7; }
+}
+
+canvas.webgl {
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: auto;
+}
+
+
+    @keyframes float {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+      100% { transform: translateY(0); }
     }
 
     @media (max-width: 768px) {
-      .cookie-container {
-        width: 100vmin;
-        height: 100vmin;
-      }
-
-      .cookie-half {
-        background-size: 100vmin 100vmin;
+      .stage {
+        width: 90vmin;
+        height: 90vmin;
       }
 
       #text {
-        font-size: 12vmin;
+        font-size: 10vmin;
       }
     }
   </style>
@@ -100,97 +147,363 @@
 
 <body>
 
-  <div class="cookie-container" id="cookie">
-    <div class="cookie-half left"></div>
-    <div class="cookie-half right"></div>
-    <h1 id="text">COMING SOON</h1>
+  <div class="stage" id="stage">
+
+    <!-- WHOLE -->
+    <img src="./images/cookie_whole.png" class="cookie whole" />
+
+    <!-- CRACKED -->
+    <img src="./images/cookie_crack.png" class="cookie crack hidden" />
+
+    <!-- PIECES -->
+    <img src="./images/cookie_left.png" class="cookie piece left hidden" />
+    <img src="./images/cookie_right.png" class="cookie piece right hidden" />
+
+  <div id="click-hint">Click Me!</div>
+
+  </div>
+   <!-- TEXT -->
+   <div id="three-container" class="hidden">
+    <canvas class="webgl"></canvas>
   </div>
 
   <audio id="cookieSound" src="cookie-break.mp3" preload="auto"></audio>
-
-  <script>
-    function isMobileDevice() {
-      return window.innerWidth <= 768;
-    }
-
-    window.onload = () => {
-      const cookie = document.getElementById('cookie');
-      const leftHalf = document.querySelector('.left');
-      const rightHalf = document.querySelector('.right');
-      const cookieSound = document.getElementById('cookieSound');
-
-      let broken = false;
-      const strength = 30;
-
-      if (!isMobileDevice()) {
-        cookie.addEventListener('mousemove', (e) => {
-          const rect = cookie.getBoundingClientRect();
-          const x = e.clientX - rect.left - rect.width / 2;
-          const y = e.clientY - rect.top - rect.height / 2;
-
-          if (!broken) {
-            /* BEFORE BREAK → MOVE WHOLE COOKIE */
-            gsap.to(cookie, {
-              x: x / strength,
-              y: y / strength,
-              rotationY: x / 18,
-              rotationX: -y / 18,
-              duration: 0.4,
-              ease: "power3.out"
-            });
-          } else {
-            /* AFTER BREAK → MOVE HALVES */
-            gsap.to(leftHalf, {
-              x: (-200 + x / 20),
-              y: y / 25,
-              rotationZ: -x / 40,
-              duration: 0.4,
-              ease: "power3.out"
-            });
-
-            gsap.to(rightHalf, {
-              x: (200 + x / 20),
-              y: y / 25,
-              rotationZ: x / 40,
-              duration: 0.4,
-              ease: "power3.out"
-            });
-          }
-        });
-
-        cookie.addEventListener('mouseleave', () => {
-          if (!broken) {
-            gsap.to(cookie, {
-              x: 0, y: 0,
-              rotationX: 0, rotationY: 0,
-              duration: 0.6,
-              ease: "power3.out"
-            });
-          }
-        });
+  <audio id="snd-click" src="./sounds/click.mp3" preload="auto"></audio>
+  <audio id="snd-crack" src="./sounds/crack.mp3" preload="auto"></audio>
+  <audio id="snd-woosh" src="./sounds/woosh.mp3" preload="auto"></audio>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.158.0/build/three.module.js"
       }
+    }
+    </script>
+    
 
-      /* AUTO BREAK */
-      setTimeout(() => {
-        broken = true;
-        cookieSound.play();
-        cookie.classList.add('break');
+  <script type="module">
+    import * as THREE from 'https://unpkg.com/three@0.158.0/build/three.module.js'
+    import { OrbitControls } from 'https://unpkg.com/three@0.158.0/examples/jsm/controls/OrbitControls.js'
+    import { FontLoader } from 'https://unpkg.com/three@0.158.0/examples/jsm/loaders/FontLoader.js'
+    import { TextGeometry } from 'https://unpkg.com/three@0.158.0/examples/jsm/geometries/TextGeometry.js'
+    
+    window.addEventListener('load', () => {
 
-        gsap.to(cookie, {
-          x: 0, y: 0,
-          rotationX: 0, rotationY: 0,
-          duration: 0.2
-        });
+      //sounds
+      const sndClick = document.getElementById('snd-click');
+      sndClick.volume = 0.5; 
+      const sndCrack = document.getElementById('snd-crack');
+      sndCrack.volume = 0.5; 
+      const sndWoosh= document.getElementById('snd-woosh');
+      sndWoosh.volume = 0.5;
+      console.log(sndClick.volume, sndClick.muted);
 
-        setTimeout(() => {
-          document.body.classList.add('show-text');
-          if (isMobileDevice()) {
-            cookie.classList.add('hide-cookie');
-          }
-        }, 1000);
-      }, 1000);
-    };
-  </script>
+      function play(sound) {
+  sound.currentTime = 0;
+  sound.playbackRate = 0.95 + Math.random() * 0.1;
+  setTimeout(() => {
+    sound.play().catch(() => {});
+  }, 20);
+}
+
+
+      const whole = document.querySelector('.whole');
+      const crack = document.querySelector('.crack');
+      const left = document.querySelector('.left');
+      const right = document.querySelector('.right');
+      const threeContainer = document.getElementById('three-container');
+      const sound = document.getElementById('cookieSound');
+      const stage = document.getElementById('stage');
+      let click = 0;
+      let cookiesGone = false;
+let textInteractive = false;
+const clickHint = document.getElementById('click-hint');
+
+window.addEventListener('click', () => {
+  click++;
+  if (click === 1 ) {
+  play(sndClick);
+}
+
+  // CLICK 1 → show crack
+  if (click === 2) {
+    play(sndCrack);
+    whole.classList.add('hidden');
+    crack.classList.remove('hidden');
+  }
+
+  // CLICK 2 → small anticipation (optional)
+  if (click === 3) {
+    play(sndClick);
+    gsap.fromTo(
+      crack,
+      { rotation: -2 },
+      { rotation: 2, yoyo: true, repeat: 3, duration: 0.08 }
+    );
+  }
+
+  // CLICK 3 → split + show text
+  if (click === 4) {
+    crack.classList.add('hidden');
+    left.classList.remove('hidden');
+    right.classList.remove('hidden');
+    clickHint.style.animation = "none"; 
+    clickHint.style.display = "none"; 
+    play(sndClick);
+
+    gsap.to(left, {
+      x: -230,
+      duration: 1,
+      ease: "power3.out"
+    });
+
+    gsap.to(right, {
+      x: 230,
+      duration: 1,
+      ease: "power3.out"
+    });
+
+    threeContainer.classList.remove('hidden');
+    initThreeText();
+
+    gsap.to(threeContainer, {
+      opacity: 1,
+      duration: 0.4,
+      ease: "power3.out",
+      delay: 0.2
+    });
+    
+    threeContainer.classList.add('active');
+  }
+
+  // CLICK 4 → remove cookie + enable text interaction
+  if (click === 5) {
+    play(sndWoosh);
+    gsap.to([left, right], {
+      opacity: 0,
+      y: 120,
+      duration: 0.6,
+      ease: "power2.in",
+      onComplete: () => {
+        left.remove();
+        right.remove();
+      }
+    });
+
+    textInteractive = true;
+    threeContainer.classList.add('interactive');
+  }
+});
+
+      let threeStarted = false;
+
+function initThreeText() {
+  if (threeStarted) return;
+  threeStarted = true;
+
+  const canvas = document.querySelector('canvas.webgl');
+
+  const scene = new THREE.Scene();
+
+  const container = document.getElementById('three-container');
+  
+  const sizes = {
+  width: window.innerWidth,
+  height: window.innerHeight
+};
+
+let draggableMeshes = [];
+
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+let isDragging = false;
+let dragOffset = new THREE.Vector3();
+let dragPlane = new THREE.Plane();
+
+
+  const camera = new THREE.PerspectiveCamera(
+    65,
+    sizes.width / sizes.height,
+    0.1,
+    100
+  );
+  camera.position.set(0, 0, 10);
+  scene.add(camera);
+
+  const renderer = new THREE.WebGLRenderer({
+    canvas,
+    alpha: true,
+    antialias: true
+  });
+
+  renderer.setSize(sizes.width, sizes.height);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+});
+
+
+  // LIGHTS
+  scene.add(new THREE.AmbientLight(0xffffff, 1));
+  const dir = new THREE.DirectionalLight(0xffffff, 0.6);
+  dir.position.set(5, 5, 5);
+  scene.add(dir);
+
+  // // CONTROLS
+  // const controls = new OrbitControls(camera, canvas);
+  // controls.enableDamping = true;
+  // controls.enabled = true;
+  // controls.enableZoom = false;
+  // controls.enablePan = false;
+  // controls.minDistance = 3;
+  // controls.maxDistance = 20;
+  let textGroup;
+
+  // FONT + TEXT
+  const loader = new FontLoader();
+loader.load('./fonts/Press Start 2P_Regular.json', (font) => {
+
+  const group = new THREE.Group();
+  scene.add(group);
+
+  const material = new THREE.MeshBasicMaterial({ color:  0xed820e });
+
+  // COMING
+  const comingGeo = new TextGeometry('COMING', {
+    font,
+    size: 1.2,
+    height: 0.25,
+    curveSegments: 8,
+    bevelEnabled: true,
+    bevelThickness: 0.04,
+    bevelSize: 0.03,
+    bevelSegments: 3
+  });
+  comingGeo.computeBoundingBox();
+  comingGeo.center(); 
+  const comingMesh = new THREE.Mesh(comingGeo, material);
+  group.add(comingMesh);
+
+  // SOON
+  const soonGeo = new TextGeometry('SOON', {
+    font,
+    size: 1.2,
+    height: 0.25,
+    curveSegments: 8,
+    bevelEnabled: true,
+    bevelThickness: 0.04,
+    bevelSize: 0.03,
+    bevelSegments: 3
+  });
+  soonGeo.computeBoundingBox();
+  soonGeo.center(); 
+  const soonMesh = new THREE.Mesh(soonGeo, material);
+  group.add(soonMesh);
+  draggableMeshes.push(comingMesh, soonMesh);
+
+
+  // 🔢 STACK USING REAL HEIGHT
+  const comingHeight =
+    comingGeo.boundingBox.max.y - comingGeo.boundingBox.min.y;
+
+  const gap = 0.5;
+
+  comingMesh.position.y = comingHeight / 2 + gap;
+  soonMesh.position.y = -comingHeight / 2 - gap;
+
+  // 🎯 CENTER ENTIRE GROUP
+  const box = new THREE.Box3().setFromObject(group);
+  const center = box.getCenter(new THREE.Vector3());
+  group.position.sub(center);
+  textGroup = group;
+  textGroup.scale.set(0.48, 0.48, 0.48);
+
+  window.addEventListener('mousemove', (e) => {
+    if (!textGroup || !textInteractive|| isDragging)  return;
+
+  const x = (e.clientX / window.innerWidth) * 2 - 1;
+  const y = (e.clientY / window.innerHeight) * 2 - 1;
+
+  // limits
+  const maxYRotation = THREE.MathUtils.degToRad(75); // left-right
+  const maxXRotation = THREE.MathUtils.degToRad(40); // top-bottom
+
+  gsap.to(textGroup.rotation, {
+    y: x * maxYRotation,
+    x: -y * maxXRotation,
+    duration: 0.8,
+    ease: "power3.out"
+  });
+});
+
+window.addEventListener('mousedown', (e) => {
+  if (!textGroup || !textInteractive) return;
+
+  const rect = canvas.getBoundingClientRect();
+
+mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera);
+
+  const intersects = raycaster.intersectObjects(draggableMeshes, false);
+
+  if (intersects.length > 0) {
+    isDragging = true;
+
+    dragPlane.setFromNormalAndCoplanarPoint(
+  camera.getWorldDirection(new THREE.Vector3()),
+  textGroup.position
+);
+
+
+    const intersectPoint = intersects[0].point;
+    dragOffset.copy(intersectPoint).sub(textGroup.position);
+  }
+});
+
+window.addEventListener('mousemove', (e) => {
+  if (!isDragging || !textGroup) return;
+
+  mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera);
+
+  const intersection = new THREE.Vector3();
+  raycaster.ray.intersectPlane(dragPlane, intersection);
+
+  if (intersection) {
+    textGroup.position.copy(intersection.sub(dragOffset));
+  }
+});
+
+window.addEventListener('mouseup', () => {
+  isDragging = false;
+});
+
+ 
+
+});
+
+  function animate() {
+    // controls.update();
+    renderer.render(scene, camera);
+    requestAnimationFrame(animate);
+  }
+
+  animate();
+}
+
+    
+})
+    </script>
+    
 
 </body>
 </html>
