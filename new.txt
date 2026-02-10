@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Coming Soon</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Press Start 2P', cursive;
+      background: white;
+      overflow: hidden;
+    }
+
+    /* ONE coordinate system */
+    .stage {
+      position: relative;
+      width: 600px;
+      height: 600px;
+    }
+
+    .cookie {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    /* LEFT / RIGHT PIECES */
+    .left {
+      transform: translateX(0);
+    }
+
+    .right {
+      transform: translateX(0);
+    }
+
+    /* TEXT */
+    #text {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+
+      font-size: 64px;
+      color: orange;
+
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    #text.show {
+      opacity: 1;
+      visibility: visible;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+      100% { transform: translateY(0); }
+    }
+
+    @media (max-width: 768px) {
+      .stage {
+        width: 90vmin;
+        height: 90vmin;
+      }
+
+      #text {
+        font-size: 10vmin;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="stage" id="stage">
+
+    <!-- WHOLE -->
+    <img src="./images/cookie_whole.png" class="cookie whole" />
+
+    <!-- CRACKED -->
+    <img src="./images/cookie_crack.png" class="cookie crack hidden" />
+
+    <!-- PIECES -->
+    <img src="./images/cookie_left.png" class="cookie piece left hidden" />
+    <img src="./images/cookie_right.png" class="cookie piece right hidden" />
+
+    <!-- TEXT -->
+    <div id="text">
+      <span>COMING</span>
+      <span>SOON</span>
+    </div>
+
+  </div>
+
+  <audio id="cookieSound" src="cookie-break.mp3" preload="auto"></audio>
+
+  <script>
+    window.onload = () => {
+      const whole = document.querySelector('.whole');
+      const crack = document.querySelector('.crack');
+      const left = document.querySelector('.left');
+      const right = document.querySelector('.right');
+      const text = document.getElementById('text');
+      const sound = document.getElementById('cookieSound');
+
+      let click = 0;
+
+      document.getElementById('stage').addEventListener('click', () => {
+        click++;
+
+        // CLICK 1 → show crack
+        if (click === 1) {
+          whole.classList.add('hidden');
+          crack.classList.remove('hidden');
+        }
+
+        // CLICK 2 → split + text
+        if (click === 2) {
+          crack.classList.add('hidden');
+          left.classList.remove('hidden');
+          right.classList.remove('hidden');
+
+          sound?.play().catch(() => {});
+
+          gsap.to(left, {
+            x: -210,
+            duration: 1,
+            ease: "power3.out"
+          });
+
+          gsap.to(right, {
+            x: 210,
+            duration: 1,
+            ease: "power3.out"
+          });
+
+          text.classList.add('show');
+        }
+
+        // CLICK 3 → remove pieces
+        if (click === 3) {
+          gsap.to([left, right], {
+            opacity: 0,
+            y: 80,
+            duration: 0.8,
+            ease: "power2.in"
+          });
+        }
+      });
+    };
+  </script>
+
+</body>
+</html>
