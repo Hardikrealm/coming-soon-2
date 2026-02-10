@@ -51,25 +51,6 @@
       transform: translateX(0);
     }
 
-    /* TEXT
-    #text {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 40px;
-
-      font-size: 64px;
-      color: orange;
-
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-      z-index: 5;
-    } */
-
     #text.show {
       opacity: 1;
       visibility: visible;
@@ -218,7 +199,7 @@ canvas.webgl {
 let textInteractive = false;
 const clickHint = document.getElementById('click-hint');
 
-window.addEventListener('click', () => {
+window.addEventListener('pointerdown', () => {
   click++;
   if (click === 1 ) {
   play(sndClick);
@@ -250,17 +231,21 @@ window.addEventListener('click', () => {
     clickHint.style.display = "none"; 
     play(sndClick);
 
-    gsap.to(left, {
-      x: -230,
-      duration: 1,
-      ease: "power3.out"
-    });
+    const stageRect = stage.getBoundingClientRect();
+const splitDistance = stageRect.width * 0.72;
 
-    gsap.to(right, {
-      x: 230,
-      duration: 1,
-      ease: "power3.out"
-    });
+gsap.to(left, {
+  x: -splitDistance,
+  duration: 1,
+  ease: "power3.out"
+});
+
+gsap.to(right, {
+  x: splitDistance,
+  duration: 1,
+  ease: "power3.out"
+});
+
 
     threeContainer.classList.remove('hidden');
     initThreeText();
@@ -301,15 +286,16 @@ function initThreeText() {
   threeStarted = true;
 
   const canvas = document.querySelector('canvas.webgl');
+  canvas.style.touchAction = "none";
 
   const scene = new THREE.Scene();
 
   const container = document.getElementById('three-container');
   
-  const sizes = {
-  width: window.innerWidth,
-  height: window.innerHeight
-};
+//   const sizes = {
+//   width: window.innerWidth,
+//   height: window.innerHeight
+// };
 
 let draggableMeshes = [];
 
@@ -323,7 +309,7 @@ let dragPlane = new THREE.Plane();
 
   const camera = new THREE.PerspectiveCamera(
     65,
-    sizes.width / sizes.height,
+    1,
     0.1,
     100
   );
@@ -336,16 +322,29 @@ let dragPlane = new THREE.Plane();
     antialias: true
   });
 
-  renderer.setSize(sizes.width, sizes.height);
+  
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  function resizeRenderer() {
+  const w = container.clientWidth;
+  const h = container.clientHeight;
 
-  window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.aspect = w / h;
   camera.updateProjectionMatrix();
-
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(w, h);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-});
+}
+
+resizeRenderer();
+window.addEventListener('resize', resizeRenderer);
+
+
+//   window.addEventListener('resize', () => {
+//   camera.aspect = window.innerWidth / window.innerHeight;
+//   camera.updateProjectionMatrix();
+
+//   renderer.setSize(window.innerWidth, window.innerHeight);
+//   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+// });
 
 
   // LIGHTS
@@ -421,9 +420,14 @@ loader.load('./fonts/Press Start 2P_Regular.json', (font) => {
   const center = box.getCenter(new THREE.Vector3());
   group.position.sub(center);
   textGroup = group;
-  textGroup.scale.set(0.48, 0.48, 0.48);
+  const baseScale = Math.min(window.innerWidth, window.innerHeight) / 900;
+const scale = THREE.MathUtils.clamp(baseScale, 0.35, 0.6);
 
-  window.addEventListener('mousemove', (e) => {
+textGroup.scale.set(scale, scale, scale);
+
+
+
+  addEventListener('pointermove', (e) => {
     if (!textGroup || !textInteractive|| isDragging)  return;
 
   const x = (e.clientX / window.innerWidth) * 2 - 1;
@@ -441,7 +445,7 @@ loader.load('./fonts/Press Start 2P_Regular.json', (font) => {
   });
 });
 
-window.addEventListener('mousedown', (e) => {
+window.addEventListener('pointerdown', (e) => {
   if (!textGroup || !textInteractive) return;
 
   const rect = canvas.getBoundingClientRect();
@@ -467,7 +471,7 @@ mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
   }
 });
 
-window.addEventListener('mousemove', (e) => {
+window.addEventListener('pointermove', (e) => {
   if (!isDragging || !textGroup) return;
 
   mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
@@ -483,7 +487,7 @@ window.addEventListener('mousemove', (e) => {
   }
 });
 
-window.addEventListener('mouseup', () => {
+window.addEventListener('pointerup', () => {
   isDragging = false;
 });
 
