@@ -1,81 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Coming Soon</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Coming Soon</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 
-  <style>
-    * { box-sizing: border-box; }
+<style>
+* { box-sizing: border-box; }
 
-    body {
-      margin: 0;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-family: 'Press Start 2P', cursive;
-      background: white;
-      overflow: hidden;
-    }
+body {
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Press Start 2P', cursive;
+  background: white;
+  overflow: hidden;
+  touch-action: none;
+}
 
-    /* ONE coordinate system */
-    .stage {
-      position: relative;
-      width: 320px;
-      height: 320px;
-    }
+/* COOKIE SIZE CONTROLLER */
+.stage {
+  position: relative;
+  width: 350px;
+  height: 350px;
+}
 
-    .cookie {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-    }
+.cookie {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
 
-    .hidden {
-      opacity: 0;
-      visibility: hidden;
-    }
+.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
 
-    /* LEFT / RIGHT PIECES */
-    .left {
-      transform: translateX(0);
-    }
-
-    .right {
-      transform: translateX(0);
-    }
-
-    /* TEXT
-    #text {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 40px;
-
-      font-size: 64px;
-      color: orange;
-
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-      z-index: 5;
-    } */
-
-    #text.show {
-      opacity: 1;
-      visibility: visible;
-      animation: float 3s ease-in-out infinite;
-    }
-    #three-container {
+#three-container {
   position: fixed;
   inset: 0;
   z-index: 10;
@@ -84,32 +52,19 @@
   visibility: hidden;
   justify-content: center;
   align-items: center;
-
-  pointer-events: none; 
-}
-#three-container.active {
-  visibility: visible;
   pointer-events: none;
 }
-#three-container.interactive {
-  pointer-events: auto; 
-}
-#three-container.hidden {
-  opacity: 0;
-  visibility: hidden;
-}
+#three-container.active { visibility: visible; }
+#three-container.interactive { pointer-events: auto; }
+
 #click-hint {
   position: absolute;
   bottom: -50px;
   width: 100%;
   text-align: center;
-
-  font-size: 29px;
-  color: #f4a261; /* light orange */
-  opacity: 0.9;
-
+  font-size: 20px;
+  color: #f4a261;
   animation: pulse 1.2s infinite ease-in-out;
-  pointer-events: none;
 }
 
 @keyframes pulse {
@@ -122,167 +77,99 @@ canvas.webgl {
   width: 100%;
   height: 100%;
   display: block;
-  pointer-events: auto;
 }
 
-
-    @keyframes float {
-      0% { transform: translateY(0); }
-      50% { transform: translateY(-12px); }
-      100% { transform: translateY(0); }
-    }
-
-    @media (max-width: 768px) {
-      .stage {
-        width: 90vmin;
-        height: 90vmin;
-      }
-
-      #text {
-        font-size: 10vmin;
-      }
-    }
-  </style>
+@media (max-width: 768px) {
+  .stage {
+    width: 70vmin;
+    height: 70vmin;
+  }
+}
+</style>
 </head>
 
 <body>
 
-  <div class="stage" id="stage">
+<div class="stage" id="stage">
+  <img src="./images/cookie_whole.png" class="cookie whole" />
+  <img src="./images/cookie_crack.png" class="cookie crack hidden" />
+  <img src="./images/cookie_left.png" class="cookie piece left hidden" />
+  <img src="./images/cookie_right.png" class="cookie piece right hidden" />
+  <div id="click-hint">Tap Me!</div>
+</div>
 
-    <!-- WHOLE -->
-    <img src="./images/cookie_whole.png" class="cookie whole" />
+<div id="three-container" class="hidden">
+  <canvas class="webgl"></canvas>
+</div>
 
-    <!-- CRACKED -->
-    <img src="./images/cookie_crack.png" class="cookie crack hidden" />
+<audio id="snd-click" src="./sounds/click.mp3" preload="auto"></audio>
+<audio id="snd-crack" src="./sounds/crack.mp3" preload="auto"></audio>
+<audio id="snd-woosh" src="./sounds/woosh.mp3" preload="auto"></audio>
 
-    <!-- PIECES -->
-    <img src="./images/cookie_left.png" class="cookie piece left hidden" />
-    <img src="./images/cookie_right.png" class="cookie piece right hidden" />
+<script type="module">
+import * as THREE from 'https://unpkg.com/three@0.158.0/build/three.module.js'
+import { FontLoader } from 'https://unpkg.com/three@0.158.0/examples/jsm/loaders/FontLoader.js'
+import { TextGeometry } from 'https://unpkg.com/three@0.158.0/examples/jsm/geometries/TextGeometry.js'
 
-  <div id="click-hint">Click Me!</div>
+window.addEventListener('load', () => {
 
-  </div>
-   <!-- TEXT -->
-   <div id="three-container" class="hidden">
-    <canvas class="webgl"></canvas>
-  </div>
+const sndClick = document.getElementById('snd-click');
+const sndCrack = document.getElementById('snd-crack');
+const sndWoosh = document.getElementById('snd-woosh');
 
-  <audio id="cookieSound" src="cookie-break.mp3" preload="auto"></audio>
-  <audio id="snd-click" src="./sounds/click.mp3" preload="auto"></audio>
-  <audio id="snd-crack" src="./sounds/crack.mp3" preload="auto"></audio>
-  <audio id="snd-woosh" src="./sounds/woosh.mp3" preload="auto"></audio>
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://unpkg.com/three@0.158.0/build/three.module.js"
-      }
-    }
-    </script>
-    
-
-  <script type="module">
-    import * as THREE from 'https://unpkg.com/three@0.158.0/build/three.module.js'
-    import { OrbitControls } from 'https://unpkg.com/three@0.158.0/examples/jsm/controls/OrbitControls.js'
-    import { FontLoader } from 'https://unpkg.com/three@0.158.0/examples/jsm/loaders/FontLoader.js'
-    import { TextGeometry } from 'https://unpkg.com/three@0.158.0/examples/jsm/geometries/TextGeometry.js'
-    
-    window.addEventListener('load', () => {
-
-      //sounds
-      const sndClick = document.getElementById('snd-click');
-      sndClick.volume = 0.5; 
-      const sndCrack = document.getElementById('snd-crack');
-      sndCrack.volume = 0.5; 
-      const sndWoosh= document.getElementById('snd-woosh');
-      sndWoosh.volume = 0.5;
-      console.log(sndClick.volume, sndClick.muted);
-
-      function play(sound) {
+function play(sound) {
   sound.currentTime = 0;
-  sound.playbackRate = 0.95 + Math.random() * 0.1;
-  setTimeout(() => {
-    sound.play().catch(() => {});
-  }, 20);
+  sound.play().catch(()=>{});
 }
 
-
-      const whole = document.querySelector('.whole');
-      const crack = document.querySelector('.crack');
-      const left = document.querySelector('.left');
-      const right = document.querySelector('.right');
-      const threeContainer = document.getElementById('three-container');
-      const sound = document.getElementById('cookieSound');
-      const stage = document.getElementById('stage');
-      let click = 0;
-      let cookiesGone = false;
-let textInteractive = false;
+const whole = document.querySelector('.whole');
+const crack = document.querySelector('.crack');
+const left = document.querySelector('.left');
+const right = document.querySelector('.right');
+const threeContainer = document.getElementById('three-container');
 const clickHint = document.getElementById('click-hint');
 
-window.addEventListener('click', () => {
-  click++;
-  if (click === 1 ) {
-  play(sndClick);
-}
+let click = 0;
+let textInteractive = false;
 
-  // CLICK 1 → show crack
+function handleTap() {
+  click++;
+
+  if (click === 1) play(sndClick);
+
   if (click === 2) {
     play(sndCrack);
     whole.classList.add('hidden');
     crack.classList.remove('hidden');
   }
 
-  // CLICK 2 → small anticipation (optional)
   if (click === 3) {
     play(sndClick);
-    gsap.fromTo(
-      crack,
-      { rotation: -2 },
-      { rotation: 2, yoyo: true, repeat: 3, duration: 0.08 }
-    );
+    gsap.fromTo(crack, { rotation: -2 }, { rotation: 2, yoyo: true, repeat: 3, duration: 0.08 });
   }
 
-  // CLICK 3 → split + show text
   if (click === 4) {
     crack.classList.add('hidden');
     left.classList.remove('hidden');
     right.classList.remove('hidden');
-    clickHint.style.animation = "none"; 
-    clickHint.style.display = "none"; 
-    play(sndClick);
+    clickHint.style.display = "none";
 
-    gsap.to(left, {
-      x: -230,
-      duration: 1,
-      ease: "power3.out"
-    });
-
-    gsap.to(right, {
-      x: 230,
-      duration: 1,
-      ease: "power3.out"
-    });
+    gsap.to(left, { x: -230, duration: 1 });
+    gsap.to(right, { x: 230, duration: 1 });
 
     threeContainer.classList.remove('hidden');
     initThreeText();
 
-    gsap.to(threeContainer, {
-      opacity: 1,
-      duration: 0.4,
-      ease: "power3.out",
-      delay: 0.2
-    });
-    
+    gsap.to(threeContainer, { opacity: 1, duration: 0.4 });
     threeContainer.classList.add('active');
   }
 
-  // CLICK 4 → remove cookie + enable text interaction
   if (click === 5) {
     play(sndWoosh);
     gsap.to([left, right], {
       opacity: 0,
       y: 120,
       duration: 0.6,
-      ease: "power2.in",
       onComplete: () => {
         left.remove();
         right.remove();
@@ -292,9 +179,14 @@ window.addEventListener('click', () => {
     textInteractive = true;
     threeContainer.classList.add('interactive');
   }
-});
+}
 
-      let threeStarted = false;
+window.addEventListener('click', handleTap);
+window.addEventListener('touchstart', handleTap);
+
+/* ================= THREE ================= */
+
+let threeStarted = false;
 
 function initThreeText() {
   if (threeStarted) return;
@@ -304,195 +196,76 @@ function initThreeText() {
 
   const scene = new THREE.Scene();
 
-  const container = document.getElementById('three-container');
-  
-  const sizes = {
-  width: window.innerWidth,
-  height: window.innerHeight
-};
-
-let draggableMeshes = [];
-
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
-
-let isDragging = false;
-let dragOffset = new THREE.Vector3();
-let dragPlane = new THREE.Plane();
-
-
-  const camera = new THREE.PerspectiveCamera(
-    65,
-    sizes.width / sizes.height,
-    0.1,
-    100
-  );
+  const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 100);
   camera.position.set(0, 0, 10);
   scene.add(camera);
 
-  const renderer = new THREE.WebGLRenderer({
-    canvas,
-    alpha: true,
-    antialias: true
-  });
-
-  renderer.setSize(sizes.width, sizes.height);
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
   window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
 
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-});
-
-
-  // LIGHTS
   scene.add(new THREE.AmbientLight(0xffffff, 1));
-  const dir = new THREE.DirectionalLight(0xffffff, 0.6);
-  dir.position.set(5, 5, 5);
-  scene.add(dir);
 
-  // // CONTROLS
-  // const controls = new OrbitControls(camera, canvas);
-  // controls.enableDamping = true;
-  // controls.enabled = true;
-  // controls.enableZoom = false;
-  // controls.enablePan = false;
-  // controls.minDistance = 3;
-  // controls.maxDistance = 20;
-  let textGroup;
-
-  // FONT + TEXT
   const loader = new FontLoader();
-loader.load('./fonts/Press Start 2P_Regular.json', (font) => {
+  loader.load('./fonts/Press Start 2P_Regular.json', (font) => {
 
-  const group = new THREE.Group();
-  scene.add(group);
+    const group = new THREE.Group();
+    scene.add(group);
 
-  const material = new THREE.MeshBasicMaterial({ color:  0xed820e });
+    const material = new THREE.MeshBasicMaterial({ color: 0xed820e });
 
-  // COMING
-  const comingGeo = new TextGeometry('COMING', {
-    font,
-    size: 1.2,
-    height: 0.25,
-    curveSegments: 8,
-    bevelEnabled: true,
-    bevelThickness: 0.04,
-    bevelSize: 0.03,
-    bevelSegments: 3
+    const comingGeo = new TextGeometry('COMING', { font, size: 1.2, height: 0.25 });
+    comingGeo.center();
+    const comingMesh = new THREE.Mesh(comingGeo, material);
+    group.add(comingMesh);
+
+    const soonGeo = new TextGeometry('SOON', { font, size: 1.2, height: 0.25 });
+    soonGeo.center();
+    const soonMesh = new THREE.Mesh(soonGeo, material);
+    group.add(soonMesh);
+
+    comingMesh.position.y = 1.2;
+    soonMesh.position.y = -1.2;
+
+    group.scale.set(0.48, 0.48, 0.48);
+
+    /* ROTATION DESKTOP */
+    window.addEventListener('mousemove', (e) => {
+      if (!textInteractive) return;
+      const x = (e.clientX / window.innerWidth) * 2 - 1;
+      const y = (e.clientY / window.innerHeight) * 2 - 1;
+
+      gsap.to(group.rotation, {
+        y: x * 1.2,
+        x: -y * 0.8,
+        duration: 0.8
+      });
+    });
+
+    /* ROTATION MOBILE */
+    window.addEventListener('touchmove', (e) => {
+      if (!textInteractive) return;
+      const t = e.touches[0];
+
+      const x = (t.clientX / window.innerWidth) * 2 - 1;
+      const y = (t.clientY / window.innerHeight) * 2 - 1;
+
+      gsap.to(group.rotation, {
+        y: x * 1.2,
+        x: -y * 0.8,
+        duration: 0.8
+      });
+    });
+
   });
-  comingGeo.computeBoundingBox();
-  comingGeo.center(); 
-  const comingMesh = new THREE.Mesh(comingGeo, material);
-  group.add(comingMesh);
-
-  // SOON
-  const soonGeo = new TextGeometry('SOON', {
-    font,
-    size: 1.2,
-    height: 0.25,
-    curveSegments: 8,
-    bevelEnabled: true,
-    bevelThickness: 0.04,
-    bevelSize: 0.03,
-    bevelSegments: 3
-  });
-  soonGeo.computeBoundingBox();
-  soonGeo.center(); 
-  const soonMesh = new THREE.Mesh(soonGeo, material);
-  group.add(soonMesh);
-  draggableMeshes.push(comingMesh, soonMesh);
-
-
-  // 🔢 STACK USING REAL HEIGHT
-  const comingHeight =
-    comingGeo.boundingBox.max.y - comingGeo.boundingBox.min.y;
-
-  const gap = 0.5;
-
-  comingMesh.position.y = comingHeight / 2 + gap;
-  soonMesh.position.y = -comingHeight / 2 - gap;
-
-  // 🎯 CENTER ENTIRE GROUP
-  const box = new THREE.Box3().setFromObject(group);
-  const center = box.getCenter(new THREE.Vector3());
-  group.position.sub(center);
-  textGroup = group;
-  textGroup.scale.set(0.48, 0.48, 0.48);
-
-  window.addEventListener('mousemove', (e) => {
-    if (!textGroup || !textInteractive|| isDragging)  return;
-
-  const x = (e.clientX / window.innerWidth) * 2 - 1;
-  const y = (e.clientY / window.innerHeight) * 2 - 1;
-
-  // limits
-  const maxYRotation = THREE.MathUtils.degToRad(75); // left-right
-  const maxXRotation = THREE.MathUtils.degToRad(40); // top-bottom
-
-  gsap.to(textGroup.rotation, {
-    y: x * maxYRotation,
-    x: -y * maxXRotation,
-    duration: 0.8,
-    ease: "power3.out"
-  });
-});
-
-window.addEventListener('mousedown', (e) => {
-  if (!textGroup || !textInteractive) return;
-
-  const rect = canvas.getBoundingClientRect();
-
-mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-
-  raycaster.setFromCamera(mouse, camera);
-
-  const intersects = raycaster.intersectObjects(draggableMeshes, false);
-
-  if (intersects.length > 0) {
-    isDragging = true;
-
-    dragPlane.setFromNormalAndCoplanarPoint(
-  camera.getWorldDirection(new THREE.Vector3()),
-  textGroup.position
-);
-
-
-    const intersectPoint = intersects[0].point;
-    dragOffset.copy(intersectPoint).sub(textGroup.position);
-  }
-});
-
-window.addEventListener('mousemove', (e) => {
-  if (!isDragging || !textGroup) return;
-
-  mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-
-  raycaster.setFromCamera(mouse, camera);
-
-  const intersection = new THREE.Vector3();
-  raycaster.ray.intersectPlane(dragPlane, intersection);
-
-  if (intersection) {
-    textGroup.position.copy(intersection.sub(dragOffset));
-  }
-});
-
-window.addEventListener('mouseup', () => {
-  isDragging = false;
-});
-
- 
-
-});
 
   function animate() {
-    // controls.update();
     renderer.render(scene, camera);
     requestAnimationFrame(animate);
   }
@@ -500,10 +273,8 @@ window.addEventListener('mouseup', () => {
   animate();
 }
 
-    
-})
-    </script>
-    
+});
+</script>
 
 </body>
 </html>
